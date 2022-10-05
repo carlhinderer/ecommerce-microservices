@@ -1,7 +1,7 @@
 from flask import jsonify, request
 
 from . import api
-from .. import db
+from .app import db
 from ..models.customer import Customer
 
 

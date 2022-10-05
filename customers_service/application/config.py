@@ -11,7 +11,6 @@ class Config:
 
 
 class DevelopmentConfig(Config):
-    DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://ecustdevuser:ecustdevpw@localhost/ecustdev'
 
 
