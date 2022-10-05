@@ -8,6 +8,10 @@ import subprocess
 import click
 
 
+docker_compose_file = "docker/development.yml"
+docker_compose_cmdline = ["docker-compose", "-f", docker_compose_file]
+
+
 def setenv(variable, default):
     os.environ[variable] = os.getenv(variable, default)
 
@@ -48,8 +52,23 @@ def flask(subcommand):
         p.wait()
 
 
+# Wrapper for Docker Compose commands
+@cli.command(context_settings={"ignore_unknown_options": True})
+@click.argument("subcommand", nargs=-1, type=click.Path())
+def compose(subcommand):
+    cmdline = docker_compose_cmdline + list(subcommand)
+
+    try:
+        p = subprocess.Popen(cmdline)
+        p.wait()
+    except KeyboardInterrupt:
+        p.send_signal(signal.SIGINT)
+        p.wait()
+
+
 # Add Click commands
 cli.add_command(flask)
+cli.add_command(compose)
 
 
 if __name__ == "__main__":
