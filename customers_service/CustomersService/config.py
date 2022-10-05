@@ -12,12 +12,12 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-
-    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://ecustuser:ecustpw@localhost/ecustdev'
+    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://ecustdevuser:ecustdevpw@localhost/ecustdev'
 
 
 class TestingConfig(Config):
     TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://ecusttestuser:ecusttestpw@localhost/ecusttest'
 
 
 class ProductionConfig(Config):
