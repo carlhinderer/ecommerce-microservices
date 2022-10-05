@@ -1,1 +1,3 @@
 -r test.txt
+
+docker-compose==1.29.2
