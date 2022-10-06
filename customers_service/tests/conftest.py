@@ -6,15 +6,16 @@ from application.app import create_app, db
 @pytest.fixture(scope='session')
 def app():
     app = create_app('testing')
+    return app
 
+
+@pytest.fixture(scope='session')
+def database(app):
     # Other setup here    
-    app.app_context().push()
-    db.create_all()
-
-    yield app
-
-    # Cleanup here
-    db.drop_all()
+    with app.app_context():
+        db.create_all()
+        yield db
+        db.drop_all()
 
 
 @pytest.fixture(scope='session')

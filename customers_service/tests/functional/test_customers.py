@@ -1,12 +1,11 @@
 import pytest
 
-from app import db
-from app.models.customer import Customer
+from application.models.customer import Customer
 
 
 
 @pytest.fixture()
-def customer_fixture():
+def customer_fixture(database):
     # Add customer record
     customer = Customer(first_name='John',
                         last_name='Doe',
@@ -14,14 +13,14 @@ def customer_fixture():
                         password='pw1234',
                         phone='9876543210')
 
-    db.session.add(customer)
-    db.session.commit()
+    database.session.add(customer)
+    database.session.commit()
 
     yield
 
     # Remove customer record
-    db.session.delete(customer)
-    db.session.commit()
+    database.session.delete(customer)
+    database.session.commit()
 
 
 def test_get_customers(client, customer_fixture):
