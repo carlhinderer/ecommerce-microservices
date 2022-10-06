@@ -16,23 +16,21 @@ def setenv(variable, default):
     os.environ[variable] = os.getenv(variable, default)
 
 
-# Default value for APPLICATION_CONFIG
 setenv("APPLICATION_CONFIG", "development")
 
 
-# Read configuration from JSON file
-config_json_filename = os.getenv("APPLICATION_CONFIG") + ".json"
-with open(os.path.join("config", config_json_filename)) as f:
-    config = json.load(f)
+def configure_app(config):
+    # Read configuration from the relative JSON file
+    with open(os.path.join("config", f"{config}.json")) as f:
+        config_data = json.load(f)
+
+    # Convert the config into a usable Python dictionary
+    config_data = {setting['name']: setting['value'] for setting in config_data}
+
+    for key, value in config_data.items():
+        setenv(key, value)
 
 
-# Set environment variables from JSON config
-config = {setting['name']: setting['value'] for setting in config}
-for key, value in config.items():
-    setenv(key, value)
-
-
-# Click CLI
 @click.group()
 def cli():
     pass
@@ -52,23 +50,44 @@ def flask(subcommand):
         p.wait()
 
 
-# Wrapper for Docker Compose commands
-@cli.command(context_settings={"ignore_unknown_options": True})
-@click.argument("subcommand", nargs=-1, type=click.Path())
-def compose(subcommand):
-    cmdline = docker_compose_cmdline + list(subcommand)
+def docker_compose_cmdline(config):
+    configure_app(os.getenv("APPLICATION_CONFIG"))
 
-    try:
-        p = subprocess.Popen(cmdline)
-        p.wait()
-    except KeyboardInterrupt:
-        p.send_signal(signal.SIGINT)
-        p.wait()
+    docker_compose_file = os.path.join("docker", f"{config}.yml")
+
+    if not os.path.isfile(docker_compose_file):
+        raise ValueError(f"The file {docker_compose_file} does not exist")
+
+    return [
+        "docker-compose",
+        "-p",
+        config,
+        "-f",
+        docker_compose_file,
+    ]
 
 
-# Add Click commands
-cli.add_command(flask)
-cli.add_command(compose)
+@cli.command()
+@click.argument("filenames", nargs=-1)
+def test(filenames):
+    os.environ["APPLICATION_CONFIG"] = "testing"
+    configure_app(os.getenv("APPLICATION_CONFIG"))
+
+    cmdline = docker_compose_cmdline(os.getenv("APPLICATION_CONFIG")) + ["up", "-d"]
+    subprocess.call(cmdline)
+
+    cmdline = docker_compose_cmdline(os.getenv("APPLICATION_CONFIG")) + ["logs", "db"]
+    logs = subprocess.check_output(cmdline)
+    while "ready to accept connections" not in logs.decode("utf-8"):
+        time.sleep(0.1)
+        logs = subprocess.check_output(cmdline)
+
+    cmdline = ["pytest", "-svv", "--cov=application", "--cov-report=term-missing"]
+    cmdline.extend(filenames)
+    subprocess.call(cmdline)
+
+    cmdline = docker_compose_cmdline(os.getenv("APPLICATION_CONFIG")) + ["down"]
+    subprocess.call(cmdline)
 
 
 if __name__ == "__main__":
