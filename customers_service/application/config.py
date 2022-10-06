@@ -3,6 +3,17 @@ import os
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'secret-key'
+
+    pg_user = os.environ["POSTGRES_USER"]
+    pg_pw = os.environ["POSTGRES_PASSWORD"]
+    pg_host = os.environ["POSTGRES_HOSTNAME"]
+    pg_port = os.environ["POSTGRES_PORT"]
+    pg_db = os.environ["APPLICATION_DB"]
+
+    SQLALCHEMY_DATABASE_URI = (
+        f"postgresql+psycopg2://{pg_user}:{pg_pw}@{pg_host}:{pg_port}/{pg_db}"
+    )
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     @staticmethod
@@ -10,22 +21,17 @@ class Config:
         pass
 
 
+class ProductionConfig(Config):
+    """Production Configuration"""
+
+
 class DevelopmentConfig(Config):
-    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://ecustdevuser:ecustdevpw@localhost/ecustdev'
+    """Development Configuration"""
 
 
 class TestingConfig(Config):
+    """Testing Configuration"""
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://ecusttestuser:ecusttestpw@localhost/ecusttest'
-
-
-class ProductionConfig(Config):
-    DB_HOST = os.environ.get('DB_HOST')
-    DB_USER = os.environ.get('DB_USER')
-    DB_PW = os.environ.get('DB_PASSWORD')
-    DB_DATABASE = os.environ.get('DB_DATABASE')
-
-    SQLALCHEMY_DATABASE_URI = f'postgresql+psycopg2://{DB_USER}:{DB_PW}@{DB_HOST}/{DB_DATABASE}'
 
 
 config = {
